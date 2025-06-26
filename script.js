@@ -3,7 +3,7 @@ const tokens =
     {
         "Programming": ["?", "→", ":", "◢", "⇒", "=", "≠", ">", "<", "≧", "≦", "Goto ", "Lbl ", "While ", "WhileEnd", "If ", "Then ", "Else ", "IfEnd", "For ", "To ", "Step ", "Next", "Break"],
         "Numbers": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⁻¹", "²", "³"],
-        "Basic Operators": ["+", "-", "×", "÷", "┘", "(", ")", "^(", "%", "E", "√(", "³√(", "ˣ√("],
+        "Basic Operators": ["+", "-", "×", "÷", "┘", "(", ")", "^(", "%", "ᴇ", "√(", "³√(", "ˣ√("],
         "Functions": ["sin(", "cos(", "tan(", "sin⁻¹(", "cos⁻¹(", "tan⁻¹(", "sinh(", "cosh(", "tanh(", "sinh⁻¹(", "cosh⁻¹(", "tanh⁻¹(", "log(", "ln(", "Rnd(", "Pol(", "Rec(", "Abs("],
         "Memory": ["A", "B", "C", "D", "X", "Y", "M", "M+", "M-", "ClrMemory", "Ans"],
         "Setup": ["Fix ", "Sci ", "Norm ", "Deg ", "Rad ", "Gra "],
@@ -208,8 +208,10 @@ function expressionEval(expr){
             }
             lastval=false;
             //If the operator is a suffix operator, apply it immediately
-            if(opProp[newop][col["suffixOp"]])
+            if(opProp[newop][col["suffixOp"]]){
+                lastval=true;
                 applyToStack(numstack,newop);
+            }
             //If it is a close bracket, don't push it into the operator stack
             else if(newop!=")")
                 opstack.push(newop)
@@ -252,7 +254,9 @@ function inputHandler(storeTo){
     if(storeTo=="+"||storeTo=="-")
         return -1;
     do{
-        var selection = parseFloat(window.prompt(`${storeTo}?`,memory[storeTo]));
+        var input=window.prompt(`${storeTo}?`,memory[storeTo])
+        var selection = parseFloat(input);
+        if(input==null)return;
     }while(isNaN(selection));
     memory[storeTo]=selection
 }

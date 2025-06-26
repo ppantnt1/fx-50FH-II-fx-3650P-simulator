@@ -1,5 +1,5 @@
 const operationList=[
-    "+","-","×",'*',"÷","/","┘","(",")","^","%","E","√","³√","ˣ√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦"
+    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","√","³√","ˣ√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦"
 ];
 
 const valSuffix=[
@@ -7,43 +7,44 @@ const valSuffix=[
 ]
 
 const opProp={
-    "≠":     [1,neq    ,2,true ,false,false],
-    "=":     [1,eq     ,2,true ,false,false],
-    ">":     [1,gt     ,2,true ,false,false],
-    "<":     [1,lt     ,2,true ,false,false],
-    "≧":     [1,geq    ,2,true ,false,false],
-    "≦":     [1,leq    ,2,true ,false,false],
-    "+":     [2,add    ,2,true ,false,false],
-    "-":     [2,sub    ,2,true ,false,false],
-    "×":     [3,mult   ,2,true ,false,false],
-    "*":     [3,mult   ,2,true ,false,false],
-    "÷":     [3,div    ,2,true ,false,false],
-    "/":     [3,div    ,2,true ,false,false],
-    "┘":     [3,fracdiv,2,true ,false,false],
-    "(":     [9,hold   ,1,false,false,false],
-    ")":     [0,hold   ,1,false,false,false],
-    "neg":   [7,neg    ,1,false,true ,false],
-    "hmul":  [5,mult   ,2,true ,false,false],
-    "^":     [6,pow    ,2,false,false,false],
-    "%":     [9,div100 ,1,false,true ,false],
-    "√":     [8,sqrt   ,1,false,false,true ],
-    "³√":    [8,cbrt   ,1,false,false,true ],
-    "ˣ√":    [8,nthrt  ,2,false,false,false],
-    "⁻¹":    [9,recip  ,1,false,true ,false],
-    "²":     [9,sq     ,1,false,true ,false],
-    "³":     [9,cb     ,1,false,true ,false],
-    "sin":   [8,sin    ,1,false,false,true ],
-    "cos":   [8,cos    ,1,false,false,true ],
-    "tan":   [8,tan    ,1,false,false,true ],
-    "sin⁻¹": [8,asin   ,1,false,false,true ],
-    "cos⁻¹": [8,acos   ,1,false,false,true ],
-    "tan⁻¹": [8,atan   ,1,false,false,true ],
-    "sinh":  [8,sinh   ,1,false,false,true ],
-    "cosh":  [8,cosh   ,1,false,false,true ],
-    "tanh":  [8,tanh   ,1,false,false,true ],
-    "sinh⁻¹":[8,asinh  ,1,false,false,true ],
-    "cosh⁻¹":[8,acosh  ,1,false,false,true ],
-    "tanh⁻¹":[8,atanh  ,1,false,false,true ]
+    "≠":     [1 ,neq    ,2,true ,false,false],
+    "=":     [1 ,eq     ,2,true ,false,false],
+    ">":     [1 ,gt     ,2,true ,false,false],
+    "<":     [1 ,lt     ,2,true ,false,false],
+    "≧":     [1 ,geq    ,2,true ,false,false],
+    "≦":     [1 ,leq    ,2,true ,false,false],
+    "+":     [2 ,add    ,2,true ,false,false],
+    "-":     [2 ,sub    ,2,true ,false,false],
+    "×":     [3 ,mult   ,2,true ,false,false],
+    "*":     [3 ,mult   ,2,true ,false,false],
+    "÷":     [3 ,div    ,2,true ,false,false],
+    "/":     [3 ,div    ,2,true ,false,false],
+    "┘":     [3 ,fracdiv,2,true ,false,false],
+    "ᴇ":     [7 ,exp10  ,2,true ,false,false],
+    "(":     [9 ,hold   ,1,false,false,false],
+    ")":     [0 ,hold   ,1,false,false,false],
+    "neg":   [7 ,neg    ,1,false,true ,false],
+    "hmul":  [5 ,mult   ,2,true ,false,false],
+    "^":     [6 ,pow    ,2,false,false,false],
+    "%":     [10,div100 ,1,false,true ,false],
+    "√":     [9 ,sqrt   ,1,false,false,true ],
+    "³√":    [9 ,cbrt   ,1,false,false,true ],
+    "ˣ√":    [9 ,nthrt  ,2,false,false,false],
+    "⁻¹":    [10,recip  ,1,false,true ,false],
+    "²":     [10,sq     ,1,false,true ,false],
+    "³":     [10,cb     ,1,false,true ,false],
+    "sin":   [9 ,sin    ,1,false,false,true ],
+    "cos":   [9 ,cos    ,1,false,false,true ],
+    "tan":   [9 ,tan    ,1,false,false,true ],
+    "sin⁻¹": [9 ,asin   ,1,false,false,true ],
+    "cos⁻¹": [9 ,acos   ,1,false,false,true ],
+    "tan⁻¹": [9 ,atan   ,1,false,false,true ],
+    "sinh":  [9 ,sinh   ,1,false,false,true ],
+    "cosh":  [9 ,cosh   ,1,false,false,true ],
+    "tanh":  [9 ,tanh   ,1,false,false,true ],
+    "sinh⁻¹":[9 ,asinh  ,1,false,false,true ],
+    "cosh⁻¹":[9 ,acosh  ,1,false,false,true ],
+    "tanh⁻¹":[9 ,atanh  ,1,false,false,true ]
 }
 
 const col={"opPrec":0,"opFunc":1,"opParam":2,"leftFirst":3,"suffixOp":4,"prefixFunc":5}
@@ -96,6 +97,9 @@ function fracdiv(num1,num2){
     return num1/num2;
 }
 
+function exp10(a,b){
+    return a*Math.pow(10,b);
+}
 
 function hold(num1){
     return num1;
@@ -108,6 +112,7 @@ function pow(a,b){
 function div100(a){
     return a/100;
 }
+
 
 function sqrt(a){
     return Math.sqrt(a);
