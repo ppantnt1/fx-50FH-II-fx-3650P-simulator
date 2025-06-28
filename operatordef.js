@@ -1,5 +1,5 @@
 const operationList=[
-    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","√","³√","ˣ√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦"
+    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","√","cb√","ˣ√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦"
 ];
 
 const valSuffix=[
@@ -20,7 +20,7 @@ const opProp={
     "÷":     [3 ,div    ,2,true ,false,false],
     "/":     [3 ,div    ,2,true ,false,false],
     "┘":     [3 ,fracdiv,2,true ,false,false],
-    "ᴇ":     [7 ,exp10  ,2,true ,false,false],
+    "ᴇ":     [7 ,expA   ,2,true ,false,false],
     "(":     [9 ,hold   ,1,false,false,false],
     ")":     [0 ,hold   ,1,false,false,false],
     "neg":   [7 ,neg    ,1,false,true ,false],
@@ -28,7 +28,7 @@ const opProp={
     "^":     [6 ,pow    ,2,false,false,false],
     "%":     [10,div100 ,1,false,true ,false],
     "√":     [9 ,sqrt   ,1,false,false,true ],
-    "³√":    [9 ,cbrt   ,1,false,false,true ],
+    "cb√":   [9 ,cbrt   ,1,false,false,true ],
     "ˣ√":    [9 ,nthrt  ,2,false,false,false],
     "⁻¹":    [10,recip  ,1,false,true ,false],
     "²":     [10,sq     ,1,false,true ,false],
@@ -97,7 +97,8 @@ function fracdiv(num1,num2){
     return num1/num2;
 }
 
-function exp10(a,b){
+function expA(a,b){
+    console.log(a,b)
     return a*Math.pow(10,b);
 }
 

@@ -1,9 +1,15 @@
 const container = document.getElementById("container")
+var inputWindow=document.getElementById("DisplayWindow")
+var inputField=document.getElementById("input")
+var messageField=document.getElementById("DisplayMessage")
+var halt=false;
+var responded=false;
+
 const tokens =
     {
         "Programming": ["?", "→", ":", "◢", "⇒", "=", "≠", ">", "<", "≧", "≦", "Goto ", "Lbl ", "While ", "WhileEnd", "If ", "Then ", "Else ", "IfEnd", "For ", "To ", "Step ", "Next", "Break"],
         "Numbers": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⁻¹", "²", "³"],
-        "Basic Operators": ["+", "-", "×", "÷", "┘", "(", ")", "^(", "%", "ᴇ", "√(", "³√(", "ˣ√("],
+        "Basic Operators": ["+", "-", "×", "÷", "┘", "(", ")", "^(", "%", "ᴇ", "√(", "cb√(", "ˣ√("],
         "Functions": ["sin(", "cos(", "tan(", "sin⁻¹(", "cos⁻¹(", "tan⁻¹(", "sinh(", "cosh(", "tanh(", "sinh⁻¹(", "cosh⁻¹(", "tanh⁻¹(", "log(", "ln(", "Rnd(", "Pol(", "Rec(", "Abs("],
         "Memory": ["A", "B", "C", "D", "X", "Y", "M", "M+", "M-", "ClrMemory", "Ans"],
         "Setup": ["Fix ", "Sci ", "Norm ", "Deg ", "Rad ", "Gra "],
@@ -12,20 +18,16 @@ const tokens =
         //"SD/REG Mode": ["ClrStat", "FreqOn", "FreqOff", "Σx²", "Σx", "n", "Σy²", "Σy", "Σxy", "Σx²y", "Σx³", "Σx⁴", "x̄", "σx", "sx", "ȳ", "σy", "sy", "a", "b", "r", "x̂", "ŷ", "minX", "maxX", "minY", "maxY", ";", "DT"]
     }
 
-var tokencode={}
 
 i=0
 for (let key in tokens) {
     container.innerHTML += `<small class="text-secondary">${key}</small><br>`
-    tokencode[key]=[]
     for (let symbol of tokens[key]) {
         container.innerHTML += `<button onclick="append(this);" type="button" class="btn btn-secondary m-1">${symbol}</button>` 
-        tokencode[key].push(i++)
     }
     container.innerHTML += '<br>'
 }
 
-console.log(tokencode)
 function append(myValue) {
     const myField = document.getElementById("code")
     var myChar=myValue.innerHTML
@@ -58,17 +60,22 @@ function exprng(){
 }
 
 var memory={"A":exprng(),"B":exprng(),"C":exprng(),"D":exprng(),"X":exprng(),"Y":exprng(),"M":exprng(),"Ans":exprng(),"Display":true}
-function runCode(){
+async function runCode(){
+    halt=false;
+    memory["Lbl"]={};
     var myField = document.getElementById("code")
-    myField.value=myField.value.replace(/\s/g,'')
+    myField.value=myField.value.replace(/\s+/g,' ')
     var codes=myField.value
     codes=codes.replaceAll("◢","◢:")
+    codes=codes.replaceAll(" ","")
     console.log(codes)
     const code=codes.split(":")
     memory["instrptr"]=0
+    memory["skipUntilMatch"]=""
     while(true){
         if(memory["instrptr"]>=code.length){
-            if(memory["Display"]==false) alert(`${code[memory['instrptr']-1]}\nEND\n${memory["Ans"]}`)
+            if(memory["Display"]==false) 
+                await IOUIManager(`${code[memory['instrptr']-1]}`,`${memory["Ans"]}`)
             return;
         }
         if(code[memory['instrptr']].length==0){
@@ -76,15 +83,22 @@ function runCode(){
             continue;
         }
         memory["Display"]=false;
-        var retval=ExecuteInstruction(code[memory['instrptr']])
+        if(memory["skipUntilMatch"]==code[memory['instrptr']])
+            memory["skipUntilMatch"]=""
+        if(memory["skipUntilMatch"]=="")
+            var retval=await ExecuteInstruction(code[memory['instrptr']])
+        console.log(memory["Display"])
+        if(halt)
+            return 1;
         if(memory["Display"]==true)
-            alert(`${code[memory['instrptr']]}\n\n${memory["Ans"]}`);
+            await IOUIManager(`${code[memory['instrptr']]}`,memory["Ans"]);
+        if(halt)
+            return 1;
 
         memory["instrptr"]++;
         console.log(memory["instrptr"],code.length)
         console.log(memory["Display"],code.length)
     }
-    
 }
 
 const ctrlFlow=["Goto","Lbl",'While',"WhileEnd","If","Then","Else","IfEnd","For","To","Step","Next","Break"]
@@ -113,6 +127,16 @@ function isVar(instr){
     return false;
 }
 
+function until(conditionFunction) {
+
+  const poll = resolve => {
+    if(conditionFunction()) resolve();
+    else setTimeout(_ => poll(resolve), 400);
+  }
+
+  return new Promise(poll);
+}
+
 function applyToStack(numstack,op){
     var tmpstack=[];
     for(var i=0;i<opProp[op][col["opParam"]];i++){
@@ -121,7 +145,7 @@ function applyToStack(numstack,op){
     numstack.push(opProp[op][col["opFunc"]](...tmpstack.reverse()));
 }
 
-function ExecuteInstruction(instr){
+async function ExecuteInstruction(instr){
     if(instr==undefined||instr.length==0)
         return;
     if(ctrlFlow.some(v=>instr.includes(v))){
@@ -139,7 +163,7 @@ function ExecuteInstruction(instr){
     }
 
     if(instr=="?"){
-        return inputHandler(storeTo);
+        return await inputHandler(storeTo);
     }
     memory["Ans"]=expressionEval(instr);
     if(storeTo!='+'&&storeTo!='-')
@@ -153,110 +177,84 @@ function ExecuteInstruction(instr){
     return 0;
 }
 
-function expressionEval(expr){
-    numstack=[];
-    opstack=[];
-    var lpcnt=0;
-    var lastval=false;
-    while(expr.length){
-        console.log(expr,/^[+-]?[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr),isOperator(expr));
-        var newop;
-        if(/^[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr)){
-            numstack.push(parseFloat(expr));
-            expr=expr.replace(/^[0-9]*[.]?[0-9]*E?[0-9]+/, '');
-            lastval=true;
-            console.log("Parsing num",numstack[numstack.length-1]);
-        }else if(newop=isOperator(expr)){
-            var newprec=opProp[newop][col["opPrec"]];
-            expr=expr.substr(newop.length);
-            if(newop[0]=="+"&&!lastval)
-                continue;
-            if(newop[0]=="-"&&!lastval){
-                opstack.push("neg");
-                continue;
-            }
 
-            if(opstack.length){
-                //console.log(newprec,opProp[last(opstack)][col["opPrec"]])
-            }
-
-            //If the new operator has lower precedence than the top operator in the stack, the old operator will be applied.
-            while(opstack.length>0&&
-                (last(opstack)!="("||newop==")") &&
-                (
-                    newprec<opProp[last(opstack)][col["opPrec"]]||
-                    (
-                        newprec==opProp[last(opstack)][col["opPrec"]]&&
-                        opProp[last(opstack)][col["leftFirst"]]
-                    )
-                )
-            ){
-                var lastop=opstack.pop()
-                applyToStack(numstack,lastop)
-                if(lastop=="(")
-                    break;
-
-            }
-            if(newop!="(")
-                while(opstack.length>0&&
-                    opProp[last(opstack)][col["prefixFunc"]]
-                ){
-                    applyToStack(numstack,opstack.pop())
-                }
-            if((opProp[newop][col["prefixFunc"]]||newop=="(")&&lastval){
-                opstack.push("hmul")
-            }
-            lastval=false;
-            //If the operator is a suffix operator, apply it immediately
-            if(opProp[newop][col["suffixOp"]]){
-                lastval=true;
-                applyToStack(numstack,newop);
-            }
-            //If it is a close bracket, don't push it into the operator stack
-            else if(newop!=")")
-                opstack.push(newop)
-
-            if(newop==")")
-                lastval=true;
-            console.log("Parsing op",opstack[opstack.length-1])
-        }else if(newop=isVar(expr)){
-            
-            expr=expr.substr(newop.length);
-            numstack.push(memory[newop]);
-            if(lastval)
-                opstack.push("hmul")
-            lastval=true
-            console.log("Parsing memory",newop,"with value:",memory[newop]);
-        }else{
-            console.log("SYNTAX ERROR")
-            alert("SYNTAX ERROR")
-            return;
-        }
-        console.log("Stack",numstack,opstack)
-        if(lpcnt++>50)break;
-    }
-    while(opstack.length){
-        applyToStack(numstack,opstack.pop())
-    }
-    if(numstack.length>1){
-        alert("SYNTAX ERROR")
-    }
-    console.log("Stack",numstack);
-    return numstack[0];
-}
 
 function ctrlFlowHandler(instr){
     console.log("Control flow detected")
-};
+    if(instr.startsWith("Lbl")){
+        if(instr.length!=4&&!/\d/.test(instr[3])){
+            alert("Argument ERROR");
+            console.log("Argument ERROR");
+            return -1;
+        }
+        var pos=instr[3];
+        if(pos in memory["Lbl"]){
+            return 0;
+        }
+        memory["Lbl"][pos]=memory["instrptr"];
+        return 0;
+    }
+    if(instr.startsWith("Goto")){
+        if(instr.length!=5&&!/\d/.test(instr[4])){
+            alert("Argument ERROR");
+            console.log("Argument ERROR");
+            return -1;
+        }
+        var pos=instr[4];
+        if(pos in memory["Lbl"]){
+            memory["instrptr"]=memory["Lbl"][pos];
+            return 0;
+        }
+        memory["skipUntilMatch"]=`Lbl${pos}`
+        return 0;
 
-function inputHandler(storeTo){
+    }
+}
+
+async function IOUIManager(line1,line2="",input=false){
+    console.log(line2)
+    if(line2==parseFloat(line2)){
+        line2=(""+line2).replace("e","ᴇ")
+    }
+    responded=false;
+    messageField.innerHTML=line1;
+
+    inputField.value=line2;
+    if(input){
+        inputField.removeAttribute("disabled","");
+    }else
+        inputField.setAttribute("disabled","");
+    inputWindow.style.display="block";
+    await until(()=>responded==true);
+    inputWindow.style.display="none";
+
+    if(halt)
+        return [];
+
+    var evinput=expressionEval(inputField.value);
+    return [evinput];
+}
+
+function ac(){
+    responded=true;
+    halt=true;
+}
+function exe(){
+    responded=true;
+}
+
+async function inputHandler(storeTo){
     console.log("Input detected")
     if(storeTo=="+"||storeTo=="-")
         return -1;
     do{
-        var input=window.prompt(`${storeTo}?`,memory[storeTo])
-        var selection = parseFloat(input);
-        if(input==null)return;
-    }while(isNaN(selection));
-    memory[storeTo]=selection
+        //var input=window.prompt(`${storeTo}?`,memory[storeTo])
+        var input=await IOUIManager(`${storeTo}?`,memory[storeTo],true);
+        if(halt)
+            return 1;
+        //var selection = parseFloat(input);
+    }while(input.length==0);
+    memory["Ans"]=input[0];
+    memory[storeTo]=input[0];
+    return 0;
 }

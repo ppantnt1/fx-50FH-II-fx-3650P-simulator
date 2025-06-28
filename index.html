@@ -2,10 +2,20 @@
 <html lang="en" >
   <head>
     <meta charset="UTF-8">
-    <title>fx-50FH II Program Helper</title>
+    <title>fx-50FH II/fx-3650P simulator</title>
+    <link rel="stylesheet" href="style.css">
 
   </head>
   <body>
+    <div id="DisplayWindow" class="modal">
+      <div class="DisplayContent">
+        <p id="DisplayMessage">Some text in the Modal..</p>
+        <input id="input" class="input"><br>
+        <button type="button" class="ibtn" onclick=exe()>EXE</button>
+        <button type="button" class="ibtn" onclick=tofrac()>To Frac</button>
+        <button type="button" class="ibtn" onclick=ac()>AC</button>
+      </div>
+    </div>
     <div class="form-floating" id="container" style="width: 100%">
       <label for="code">Program</label>
         <code>
@@ -14,7 +24,7 @@
       <button type="button" onclick=runCode()>Run</button><br>
     </div>
     <script  src="./script.js"></script>
-    <script  src="./operationdef.js"></script>
-
+    <script  src="./operatordef.js"></script>
+    <script  src="./eval.js"></script>
   </body>
 </html>
