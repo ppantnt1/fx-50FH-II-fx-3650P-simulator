@@ -1,3 +1,41 @@
+function isOperator(instr){
+    for(var i in operationList){
+        var op=operationList[i]
+        if(instr.startsWith(op)){
+            instr=instr.substr(op.length)
+            return op;
+        }
+    }
+    return false;
+}
+
+function isVar(instr){
+    for(var i in operationList){
+        var val=valSuffix[i]
+        if(instr.startsWith(val)){
+            return val;
+        }
+    }
+    return false;
+}
+
+function applyToStack(numstack,op){
+    var tmpstack=[];
+    for(var i=0;i<opProp[op][col["opParam"]];i++){
+        tmpstack.push(numstack.pop());
+    }
+    var retval=opProp[op][col["opFunc"]](...tmpstack.reverse());
+    if(memory["Mode"]=="cmplx"){
+        if(retval instanceof cmplx){
+            numstack.push(retval);
+        }else{
+            numstack.push(new cmplx(retval));
+        }
+        return;
+    }
+    numstack.push(opProp[op][col["opFunc"]](...tmpstack.reverse()));
+}
+
 function clearforOperator(opstack,numstack,newop){
     var newprec=opProp[newop][col["opPrec"]];
     //If the new operator has lower precedence than the top operator in the stack, the old operator will be applied.
@@ -27,10 +65,14 @@ function expressionEval(expr){
     var lpcnt=0;
     var lastval=false;
     while(expr.length){
-        console.log(expr,/^[+-]?[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr),isOperator(expr));
+        //console.log(expr,/^[+-]?[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr),isOperator(expr));
         var newop;
         if(/^[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr)){
-            numstack.push(parseFloat(expr));
+            if(memory["Mode"]=="cmplx"){
+                numstack.push(new cmplx(parseFloat(expr)));
+            }else{
+                numstack.push(parseFloat(expr));
+            }
             expr=expr.replace(/^[0-9]*[.]?[0-9]*E?[0-9]+/, '');
             lastval=true;
             console.log("Parsing num",numstack[numstack.length-1]);
@@ -82,7 +124,19 @@ function expressionEval(expr){
                 clearforOperator(opstack,numstack,"hmul")
                 opstack.push("hmul")
             }
-            numstack.push(memory[newop]);
+            if(memory["Mode"]=="cmplx"){
+                if(isCmplx(memory[newop])){
+                    numstack.push(memory[newop]);
+                }else{
+                    numstack.push(new cmplx(memory[newop]));
+                }
+            }else{
+                if(isCmplx(memory[newop])){
+                    numstack.push(memory[newop].re);
+                }else{
+                    numstack.push(memory[newop]);
+                }
+            }
             lastval=true
             console.log("Parsing memory",newop,"with value:",memory[newop]);
         }else{
@@ -90,7 +144,7 @@ function expressionEval(expr){
             alert("SYNTAX ERROR")
             return;
         }
-        console.log("Stack",numstack,opstack)
+        console.log("Stack",...numstack,opstack)
         if(lpcnt++>50)break;
     }
     while(opstack.length){
@@ -100,6 +154,6 @@ function expressionEval(expr){
         alert("SYNTAX ERROR")
         return;
     }
-    console.log("Stack",numstack);
+    console.log("Stack",...numstack);
     return numstack[0];
 }

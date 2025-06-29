@@ -15,9 +15,14 @@ const tokens =
         "Setup": ["Fix ", "Sci ", "Norm ", "Deg ", "Rad ", "Gra "],
         "Other": ["ℙ", "ℂ", ",", ";", "Ran#", "π"],
         "Complex Mode": ["i", "∠", ">r∠θ", ">a+bi", "arg(", "Conig("],
+        "DRG":["°","ʳ","ᵍ"]
         //"SD/REG Mode": ["ClrStat", "FreqOn", "FreqOff", "Σx²", "Σx", "n", "Σy²", "Σy", "Σxy", "Σx²y", "Σx³", "Σx⁴", "x̄", "σx", "sx", "ȳ", "σy", "sy", "a", "b", "r", "x̂", "ŷ", "minX", "maxX", "minY", "maxY", ";", "DT"]
-    }
+   }
 
+const shortCut=[
+    [/(->)/,"→"],
+    [/(=>)/,"⇒"],
+]
 
 i=0
 for (let key in tokens) {
@@ -55,16 +60,33 @@ function append(myValue) {
     }
 }
 
+const modes=["comp","cmplx"]
+var modecount=1;
+var modeButton=document.getElementById("ModeButton");
+function changeMode(){
+    modecount++;
+    modecount%=modes.length;
+    modeButton.innerHTML=`Current Mode: ${modes[modecount]}`
+    memory["Mode"]=modes[modecount];
+}
+
+window.addEventListener("load",function(){
+    changeMode();
+})
+
 function exprng(){
     return Math.exp(Math.random()*460-230)
 }
 
-var memory={"A":exprng(),"B":exprng(),"C":exprng(),"D":exprng(),"X":exprng(),"Y":exprng(),"M":exprng(),"Ans":exprng(),"Display":true}
+var memory={"A":exprng(),"B":exprng(),"C":exprng(),"D":exprng(),"X":exprng(),"Y":exprng(),"M":exprng(),"Ans":exprng(),"Display":true,"Mode":"comp","AngleMode":"deg","RoundMode":"Norm1"}
 async function runCode(){
     halt=false;
     memory["Lbl"]={};
     var myField = document.getElementById("code")
     myField.value=myField.value.replace(/\s+/g,' ')
+    for(var i in shortCut){
+        myField.value=myField.value.replace(...shortCut[i])
+    }
     var codes=myField.value
     codes=codes.replaceAll("◢","◢:")
     codes=codes.replaceAll(" ","")
@@ -75,7 +97,7 @@ async function runCode(){
     while(true){
         if(memory["instrptr"]>=code.length){
             if(memory["Display"]==false) 
-                await IOUIManager(`${code[memory['instrptr']-1]}`,`${memory["Ans"]}`)
+                await IOUIManager(`${code[memory['instrptr']-1]}`,memory["Ans"])
             return;
         }
         if(code[memory['instrptr']].length==0){
@@ -96,8 +118,8 @@ async function runCode(){
             return 1;
 
         memory["instrptr"]++;
-        console.log(memory["instrptr"],code.length)
-        console.log(memory["Display"],code.length)
+        //console.log(memory["instrptr"],code.length)
+        //console.log(memory["Display"],code.length)
     }
 }
 
@@ -107,60 +129,51 @@ function last(arr){
     return arr[arr.length-1];
 }
 
-function isOperator(instr){
-    for(var i in operationList){
-        var op=operationList[i]
-        if(instr.startsWith(op)){
-            instr=instr.substr(op.length)
-            return op;
-        }
-    }
-    return false;
-}
-function isVar(instr){
-    for(var i in operationList){
-        var val=valSuffix[i]
-        if(instr.startsWith(val)){
-            return val;
-        }
-    }
-    return false;
-}
-
 function until(conditionFunction) {
 
   const poll = resolve => {
     if(conditionFunction()) resolve();
-    else setTimeout(_ => poll(resolve), 400);
+    else setTimeout(_ => poll(resolve), 10);
   }
 
   return new Promise(poll);
 }
 
-function applyToStack(numstack,op){
-    var tmpstack=[];
-    for(var i=0;i<opProp[op][col["opParam"]];i++){
-        tmpstack.push(numstack.pop());
-    }
-    numstack.push(opProp[op][col["opFunc"]](...tmpstack.reverse()));
-}
-
-async function ExecuteInstruction(instr){
+async function ExecuteInstruction(instr,nesting=0){
     if(instr==undefined||instr.length==0)
         return;
-    if(ctrlFlow.some(v=>instr.includes(v))){
-        ctrlFlowHandler(instr);
-        return;
+    if(ctrlFlow.some(v=>instr.startsWith(v))){
+        return ctrlFlowHandler(instr);
     }
+    
+    console.log(instr)
+    var ind=instr.indexOf("⇒");
+    if(ind!=-1){
+        await ExecuteInstruction(instr.substr(0,ind),nesting+1);
+        if(isCmplx(memory["Ans"])){
+            console.log(cmplx.mul(memory["Ans"],cmplx.conjg(memory["Ans"])).re)
+            if(cmplx.mul(memory["Ans"],cmplx.conjg(memory["Ans"])).re>=1e-28)
+                await ExecuteInstruction(instr.substr(ind+1),nesting+1)
+        }
+        else if(memory["Ans"]*memory["Ans"]>=1e-28)
+            await ExecuteInstruction(instr.substr(ind+1),nesting+1)
+        
+        return 0;
+    }
+
+
     if(instr.substr(-1)=="◢"){
         memory["Display"]=true
         instr=instr.substr(0,instr.length-1);
     }
+
+
     var storeTo="Ans"
     if(new Set(["→A","→B","→C","→D","→X","→Y","→M","M+","M-"]).has(instr.substr(-2))){
         storeTo=instr.substr(-1);
         instr=instr.substr(0,instr.length-2);
     }
+    
 
     if(instr=="?"){
         return await inputHandler(storeTo);
@@ -169,9 +182,17 @@ async function ExecuteInstruction(instr){
     if(storeTo!='+'&&storeTo!='-')
         memory[storeTo]=memory["Ans"];
     else if(storeTo=="+"){
-        memory["M"]+=memory["Ans"];
+        if(isCmplx(memory["M"])){
+            memory["M"]=cmplx.add(memory["M"],memory["Ans"]);
+        }else{
+            memory["M"]+=memory["Ans"];
+        }
     }else{
-        memory["M"]-=memory["Ans"];
+        if(isCmplx(memory["M"])){
+            memory["M"]=cmplx.sub(memory["M"],memory["Ans"]);
+        }else{
+            memory["M"]-=memory["Ans"];
+        }
     }
     console.log("Store to",storeTo,memory[storeTo])
     return 0;
@@ -211,50 +232,3 @@ function ctrlFlowHandler(instr){
     }
 }
 
-async function IOUIManager(line1,line2="",input=false){
-    console.log(line2)
-    if(line2==parseFloat(line2)){
-        line2=(""+line2).replace("e","ᴇ")
-    }
-    responded=false;
-    messageField.innerHTML=line1;
-
-    inputField.value=line2;
-    if(input){
-        inputField.removeAttribute("disabled","");
-    }else
-        inputField.setAttribute("disabled","");
-    inputWindow.style.display="block";
-    await until(()=>responded==true);
-    inputWindow.style.display="none";
-
-    if(halt)
-        return [];
-
-    var evinput=expressionEval(inputField.value);
-    return [evinput];
-}
-
-function ac(){
-    responded=true;
-    halt=true;
-}
-function exe(){
-    responded=true;
-}
-
-async function inputHandler(storeTo){
-    console.log("Input detected")
-    if(storeTo=="+"||storeTo=="-")
-        return -1;
-    do{
-        //var input=window.prompt(`${storeTo}?`,memory[storeTo])
-        var input=await IOUIManager(`${storeTo}?`,memory[storeTo],true);
-        if(halt)
-            return 1;
-        //var selection = parseFloat(input);
-    }while(input.length==0);
-    memory["Ans"]=input[0];
-    memory[storeTo]=input[0];
-    return 0;
-}
