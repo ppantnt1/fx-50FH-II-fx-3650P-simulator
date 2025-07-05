@@ -1,15 +1,25 @@
 function numToStr(a){
-    return (""+a).replace("e","ᴇ")
+    return (""+a.toPrecision(10)).replace("e","ᴇ")
 }
 
 function cmplxToStr(a){
-    return `${numToStr(a.re)}+${numToStr(a.im)}i`
+    if(a.im==0&&a.re==0)
+        return "0";
+    if(a.im==0)
+        return numToStr(a.re);
+    if(a.re==0)
+        return `${numToStr(a.im)}i`
+    if(a.im<0){
+        return `${numToStr(a.re)}${numToStr(a.im)}i`;
+    }
+    return `${numToStr(a.re)}+${numToStr(a.im)}i`;
 }
 
 
 async function IOUIManager(line1,line2="",input=false){
     console.log(line2 instanceof cmplx)
     console.log(line2)
+    var evinput=line2;
     if(isCmplx(line2)){
         line2=cmplxToStr(line2);
     }
@@ -35,7 +45,8 @@ async function IOUIManager(line1,line2="",input=false){
             inputWindow.style.display="none";
             return [];
         }
-        var evinput=expressionEval(inputField.value);
+        if(input&&inputField.value!=line2)
+            evinput=expressionEval(inputField.value);
     }while(input&&inputField.value=="");
     inputWindow.style.display="none";
 
@@ -69,6 +80,8 @@ async function inputHandler(storeTo){
         //var selection = parseFloat(input);
     }while(input.length==0);
     //memory["Ans"]=input[0];
-    memory[storeTo]=input[0];
+    if(input){
+        memory[storeTo]=input[0];
+    }
     return 0;
 }

@@ -1,5 +1,5 @@
 const operationList=[
-    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","√","cb√","ˣ√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦","ln","log","°","ʳ","ᵍ","arg","Conjg"
+    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","cb√","ˣ√","√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦","ln","log","°","ʳ","ᵍ","arg","Conjg"
 ];
 
 const valSuffix=[
@@ -127,7 +127,7 @@ function mult(a,b){
 
 function neg(a){
     if((a instanceof cmplx)){
-        return cmplx.sub(new cmplx(),a)
+        return cmplx.sub(new cmplx(0),a)
     }
     return -a;
 }
@@ -150,6 +150,9 @@ function expA(a,b){
     if((a instanceof cmplx)&&(a.im!=0||b.im!=0)){
         halt=true;
         return 0;
+    }else if(isCmplx(a)){
+        a=a.re;
+        b=b.re;
     }
     return a*Math.pow(10,b);
 }
@@ -240,7 +243,7 @@ function sq(a){
 }
 
 function cb(a){
-    if(a instanceof cmplx)
+    if(isCmplx(a))
         return cmplx.cb(a);
     return a*a*a;
 }
@@ -399,7 +402,7 @@ function ln(x){
         }
         x=x.re;
     }
-    return Math.ln(x);
+    return Math.log(x);
 }
 
 function fromdeg(x){

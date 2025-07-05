@@ -27,7 +27,7 @@ class cmplx{
         return cmplx.mul(a,a);
     }
     static cb(a){
-        return cmplx.mul(a,cmplx.sq());
+        return cmplx.mul(a,cmplx.sq(a));
     }
     static conjg(a){
         return new cmplx(a.re,-a.im)
@@ -54,4 +54,20 @@ function isNumber(value) {
 
 function isCmplx(value){
     return value instanceof cmplx;
+}
+
+function isMathError(value){
+    if(isCmplx(value)){
+        if(isNaN(value.re)||isNaN(value.im))
+            return true;
+        if(Math.abs(value.re)>=1e100||Math.abs(value.im)>=1e100)
+            return true;
+        return false;
+    }
+    if(isNaN(value))
+        return true;
+    if(Math.abs(value)>=1e100)
+        return true;
+    return false;
+    
 }

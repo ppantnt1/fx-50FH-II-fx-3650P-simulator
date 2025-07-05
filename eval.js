@@ -24,7 +24,13 @@ function applyToStack(numstack,op){
     for(var i=0;i<opProp[op][col["opParam"]];i++){
         tmpstack.push(numstack.pop());
     }
-    var retval=opProp[op][col["opFunc"]](...tmpstack.reverse());
+    tmpstack.reverse();
+    var retval=opProp[op][col["opFunc"]](...tmpstack);
+    if(isMathError(retval)){
+        halt=true;
+        console.trace("Math ERROR",...tmpstack,op)
+        memory["Status"]="Math ERROR"
+    }
     if(memory["Mode"]=="cmplx"){
         if(retval instanceof cmplx){
             numstack.push(retval);
@@ -33,13 +39,13 @@ function applyToStack(numstack,op){
         }
         return;
     }
-    numstack.push(opProp[op][col["opFunc"]](...tmpstack.reverse()));
+    numstack.push(retval);
 }
 
 function clearforOperator(opstack,numstack,newop){
     var newprec=opProp[newop][col["opPrec"]];
     //If the new operator has lower precedence than the top operator in the stack, the old operator will be applied.
-    if(opstack.length) console.log(newprec,opProp[last(opstack)][col["opPrec"]])
+    //if(opstack.length) console.log(newprec,opProp[last(opstack)][col["opPrec"]])
     while(opstack.length>0&&
         (last(opstack)!="("||newop==")") &&
         (
@@ -52,7 +58,8 @@ function clearforOperator(opstack,numstack,newop){
     ){
         var lastop=opstack.pop();
         applyToStack(numstack,lastop);
-        console.log(numstack,lastop);
+        if(halt) return;
+        console.log(...numstack,lastop);
         if(lastop=="(")
             return;
 
@@ -92,16 +99,19 @@ function expressionEval(expr){
                 //console.log(newprec,opProp[last(opstack)][col["opPrec"]])
             }
             clearforOperator(opstack,numstack,newop)
-            if(newop=="")
+            if(halt) return;
 
-            if(newop!="(")
+            if(newop!="("||opProp[last(newop)][col["prefixFunc"]])
                 while(opstack.length>0&&
                     opProp[last(opstack)][col["prefixFunc"]]
                 ){
                     applyToStack(numstack,opstack.pop())
+                    if(halt)
+                        return;
                 }
             if((opProp[newop][col["prefixFunc"]]||newop=="(")&&lastval){
                 clearforOperator(opstack,numstack,"hmul")
+                if(halt) return;
                 opstack.push("hmul")
             }
             lastval=false;
@@ -109,6 +119,7 @@ function expressionEval(expr){
             if(opProp[newop][col["suffixOp"]]){
                 lastval=true;
                 applyToStack(numstack,newop);
+                if(halt) return;
             }
             //If it is a close bracket, don't push it into the operator stack
             else if(newop!=")")
@@ -122,6 +133,7 @@ function expressionEval(expr){
             expr=expr.substr(newop.length);
             if(lastval){
                 clearforOperator(opstack,numstack,"hmul")
+                if(halt) return;
                 opstack.push("hmul")
             }
             if(memory["Mode"]=="cmplx"){
@@ -140,18 +152,24 @@ function expressionEval(expr){
             lastval=true
             console.log("Parsing memory",newop,"with value:",memory[newop]);
         }else{
-            console.log("SYNTAX ERROR")
-            alert("SYNTAX ERROR")
+            memory["Status"]="SYNTAX ERROR";
+            halt=true;
+            console.log("Syntax ERROR");
+            alert("SYNTAX ERROR");
             return;
         }
         console.log("Stack",...numstack,opstack)
-        if(lpcnt++>50)break;
+        if(lpcnt++>500)break;
     }
     while(opstack.length){
         applyToStack(numstack,opstack.pop())
+        console.log(halt)
+        if(halt) return;
     }
     if(numstack.length>1){
         alert("SYNTAX ERROR")
+        console.log("Syntax ERROR")
+        halt=true;
         return;
     }
     console.log("Stack",...numstack);
