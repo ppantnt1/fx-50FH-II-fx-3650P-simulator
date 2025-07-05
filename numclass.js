@@ -71,3 +71,15 @@ function isMathError(value){
     return false;
     
 }
+
+function neq0(val){
+    
+    if(isCmplx(val)){
+        if(cmplx.mul(val,cmplx.conjg(val)).re>=1e-28)
+            return true;
+    }   
+    else if(val*val>=1e-28)
+        return true;
+
+    return false;
+}

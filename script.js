@@ -197,17 +197,11 @@ async function ExecuteInstruction(instr,nesting=0){
     var ind=instr.indexOf("⇒");
     if(ind!=-1){
         await ExecuteInstruction(instr.substr(0,ind),nesting+1);
-        if(isCmplx(memory["Ans"])){
-            console.log(cmplx.mul(memory["Ans"],cmplx.conjg(memory["Ans"])).re)
-            if(cmplx.mul(memory["Ans"],cmplx.conjg(memory["Ans"])).re>=1e-28)
-                await ExecuteInstruction(instr.substr(ind+1),nesting+1)
-            else
-                memory["Display"]=false;
-        }
-        else if(memory["Ans"]*memory["Ans"]>=1e-28)
+        if(neq0(memory["Ans"])){
             await ExecuteInstruction(instr.substr(ind+1),nesting+1)
-        else
+        }else{
             memory["Display"]=false;
+        }
         
         return 0;
     }
@@ -308,7 +302,7 @@ function ctrlFlowHandler(instr){
         var expr=expressionEval(instr);
         if(halt) return -1;
         console.log(expr)
-        if(expr>1e-13){
+        if(neq0(expr)){
             memory["WhilePos"]=memory["instrptr"];
         }else{
             memory["WhilePos"]=-2;
@@ -343,25 +337,25 @@ function ctrlFlowHandler(instr){
         return 0;
     }
 
-    if(instr.startsWith("If")){
-        instr=instr.substr(2);
-        var sto="";
-        if(instr.substr(-2)=="M+"||instr.substr(-2)=="M-"){
-            sto=instr.substr(-2);
-            instr=instr.substr(0,instr.length-2);
-        }
-        var expr=expressionEval(instr);
-        //console.log(sto,instr)
-        if(halt)return -1;
-        if(sto=="M+")
-            memory["M"]+=expr;
-        if(sto=="M-")
-            memory["M"]-=expr;
-        memory["IfEval"]=expr>1e-13;
-        if(!memory["IfEval"]){
-            memory["skipUntilMatch"]=/^(Else.*|IfEnd)/
-        }
-        return 0;
+if(instr.startsWith("If")){
+    instr=instr.substr(2);
+    var sto="";
+    if(instr.substr(-2)=="M+"||instr.substr(-2)=="M-"){
+        sto=instr.substr(-2);
+        instr=instr.substr(0,instr.length-2);
     }
+    var expr=expressionEval(instr);
+    //console.log(sto,instr)
+    if(halt)return -1;
+    if(sto=="M+")
+        memory["M"]+=expr;
+    if(sto=="M-")
+        memory["M"]-=expr;
+    memory["IfEval"]=neq0(expr);
+    if(!memory["IfEval"]){
+        memory["skipUntilMatch"]=/^(Else.*|IfEnd)/
+    }
+    return 0;
+}
 }
 
