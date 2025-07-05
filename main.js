@@ -17,7 +17,7 @@ const tokens =
         "Complex Mode": ["i", "∠", ">r∠θ", ">a+bi", "arg(", "Conig("],
         "DRG":["°","ʳ","ᵍ"]
         //"SD/REG Mode": ["ClrStat", "FreqOn", "FreqOff", "Σx²", "Σx", "n", "Σy²", "Σy", "Σxy", "Σx²y", "Σx³", "Σx⁴", "x̄", "σx", "sx", "ȳ", "σy", "sy", "a", "b", "r", "x̂", "ŷ", "minX", "maxX", "minY", "maxY", ";", "DT"]
-   }
+    }
 
 const shortCut=[
     [/(->)/g,"→"],
@@ -43,9 +43,9 @@ function RCLAll(){
     for(let key in varname){
         var content=document.getElementById(`${varname[key]}val`);
         if(isCmplx(memory[varname[key]]))
-            content.value=cmplxToStr(memory[varname[key]]);
+        content.value=cmplxToStr(memory[varname[key]]);
         else
-            content.value=numToStr(memory[varname[key]]);
+        content.value=numToStr(memory[varname[key]]);
     }
 }
 
@@ -53,9 +53,9 @@ function append(myValue) {
     const myField = document.getElementById("code")
     var myChar=myValue.innerHTML
     if(myValue.innerHTML=="&lt;")
-        myChar="<";
+    myChar="<";
     if(myValue.innerHTML=="&gt;")
-        myChar=">";
+    myChar=">";
     if (document.selection) {
         myField.focus();
         sel = document.selection.createRange();
@@ -131,7 +131,7 @@ async function runCode(){
     while(true){
         if(memory["instrptr"]>=code.length){
             if(!memory["Display"]) 
-                await IOUIManager(`${code[memory['instrptr']-1]}`,memory["Ans"])
+            await IOUIManager(`${code[memory['instrptr']-1]}`,memory["Ans"])
             return;
         }
         if(code[memory['instrptr']].length==0){
@@ -140,16 +140,16 @@ async function runCode(){
         }
         memory["Display"]=false;
         if(code[memory['instrptr']].match(memory["skipUntilMatch"]))
-            memory["skipUntilMatch"]=""
+        memory["skipUntilMatch"]=""
         if(memory["skipUntilMatch"]=="")
-            var retval=await ExecuteInstruction(code[memory['instrptr']])
+        var retval=await ExecuteInstruction(code[memory['instrptr']])
         RCLAll();
         if(halt) return 1;
         if(memory["Display"]==true)
-            await IOUIManager(`${code[memory['instrptr']]}`,memory["Ans"]);
+        await IOUIManager(`${code[memory['instrptr']]}`,memory["Ans"]);
         if(halt) return 1;
         if(memory["jmpto"]<0)
-            memory["instrptr"]++;
+        memory["instrptr"]++;
         else{
             memory["instrptr"]=memory["jmpto"];
             memory["jmpto"]=-1;
@@ -167,12 +167,12 @@ function last(arr){
 
 function until(conditionFunction) {
 
-  const poll = resolve => {
-    if(conditionFunction()) resolve();
-    else setTimeout(_ => poll(resolve), 10);
-  }
+    const poll = resolve => {
+        if(conditionFunction()) resolve();
+        else setTimeout(_ => poll(resolve), 10);
+    }
 
-  return new Promise(poll);
+    return new Promise(poll);
 }
 
 async function ExecuteInstruction(instr,nesting=0){
@@ -188,11 +188,11 @@ async function ExecuteInstruction(instr,nesting=0){
         return 0;
     }
     if(instr==undefined||instr.length==0)
-        return;
+    return;
     if(ctrlFlow.some(v=>instr.startsWith(v))){
         return ctrlFlowHandler(instr);
     }
-    
+
     console.log(instr)
     var ind=instr.indexOf("⇒");
     if(ind!=-1){
@@ -202,7 +202,7 @@ async function ExecuteInstruction(instr,nesting=0){
         }else{
             memory["Display"]=false;
         }
-        
+
         return 0;
     }
 
@@ -214,7 +214,7 @@ async function ExecuteInstruction(instr,nesting=0){
         storeTo=instr.substr(-1);
         instr=instr.substr(0,instr.length-2);
     }
-    
+
 
     if(instr=="?"){
         return await inputHandler(storeTo);
@@ -223,7 +223,7 @@ async function ExecuteInstruction(instr,nesting=0){
     if(halt) return; 
     memory["Ans"]=retval;
     if(storeTo!='+'&&storeTo!='-')
-        memory[storeTo]=memory["Ans"];
+    memory[storeTo]=memory["Ans"];
     else if(storeTo=="+"){
         if(isCmplx(memory["M"])){
             memory["M"]=cmplx.add(memory["M"],memory["Ans"]);
@@ -243,119 +243,4 @@ async function ExecuteInstruction(instr,nesting=0){
 
 
 
-function ctrlFlowHandler(instr){
-    console.log("Control flow detected",instr)
-    if(instr.startsWith("Lbl")){
-        if(instr.length!=4&&!/\d/.test(instr[3])){
-            alert("Argument ERROR");
-            console.log("Argument ERROR");
-            halt=true;
-            return -1;
-        }
-        var pos=instr[3];
-        if(pos in memory["Lbl"]){
-            return 0;
-        }
-        memory["Lbl"][pos]=memory["instrptr"];
-        return 0;
-    }
-    if(instr.startsWith("Goto")){
-        if(instr.length!=5&&!/\d/.test(instr[4])){
-            alert("Argument ERROR");
-            console.log("Argument ERROR");
-            halt=true;
-            return -1;
-        }
-        var pos=instr[4];
-        //backward jump
-        if(pos in memory["Lbl"]){
-            memory["jmpto"]=memory["Lbl"][pos];
-            return 0;
-        }
-
-        //forward jump
-        memory["skipUntilMatch"]=`Lbl${pos}`
-        return 0;
-    }
-    if(instr.startsWith("WhileEnd")){
-        if(instr.length!=8){
-            alert("Argument ERROR");
-            console.trace("Argument ERROR");
-            halt=true;
-            return -1;
-        }
-        if(memory["WhilePos"]==-1){
-            alert("Syntax ERROR");
-            console.trace("Syntax ERROR");
-            halt=true;
-            return -1;
-        }
-        if(memory["WhilePos"]==-2){
-            memory["WhilePos"]==-1;
-            return 0;
-        }
-        memory["jmpto"]=memory["WhilePos"];
-        return 0;
-    }
-    if(instr.startsWith("While")){
-        instr=instr.substr(5);
-        var expr=expressionEval(instr);
-        if(halt) return -1;
-        console.log(expr)
-        if(neq0(expr)){
-            memory["WhilePos"]=memory["instrptr"];
-        }else{
-            memory["WhilePos"]=-2;
-            memory["skipUntilMatch"]=/^WhileEnd/
-        }
-        return 0;
-    }
-    if(instr.startsWith("IfEnd")){
-        if(instr.length!=5){
-            alert("Syntax ERROR");
-            console.log("Syntax ERROR");
-            halt=true;
-            return -1;
-        }
-        return 0;
-    }
-    if(instr.startsWith("Else")){
-        if(memory["IfEval"]){
-            memory["Display"]=false;
-            memory["skipUntilMatch"]=/^IfEnd/;
-            return 0;
-        }
-        instr=instr.substr(4);
-        ExecuteInstruction(instr,1);
-        if(halt)return -1;
-        return 0;
-    }
-    if(instr.startsWith("Then")){
-        instr=instr.substr(4);
-        ExecuteInstruction(instr,1);
-        if(halt)return -1;
-        return 0;
-    }
-
-if(instr.startsWith("If")){
-    instr=instr.substr(2);
-    var sto="";
-    if(instr.substr(-2)=="M+"||instr.substr(-2)=="M-"){
-        sto=instr.substr(-2);
-        instr=instr.substr(0,instr.length-2);
-    }
-    var expr=expressionEval(instr);
-    //console.log(sto,instr)
-    if(halt)return -1;
-    if(sto=="M+")
-        memory["M"]+=expr;
-    if(sto=="M-")
-        memory["M"]-=expr;
-    memory["IfEval"]=neq0(expr);
-    if(!memory["IfEval"]){
-        memory["skipUntilMatch"]=/^(Else.*|IfEnd)/
-    }
-    return 0;
-}
-}
 
