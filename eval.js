@@ -32,7 +32,7 @@ function applyToStack(numstack,op){
         memory["Status"]="Math ERROR"
     }
     if(memory["Mode"]=="cmplx"){
-        if(retval instanceof cmplx){
+        if(isCmplx(retval)){
             numstack.push(retval);
         }else{
             numstack.push(new cmplx(retval));
@@ -67,11 +67,17 @@ function clearforOperator(opstack,numstack,newop){
 }
 
 function expressionEval(expr){
+    var addhandle="";
+    if(expr.substr(-2)=="M+"||expr.substr(-2)=="M-"){
+        addhandle=expr.substr(-2);
+        expr=expr.substr(0,expr.length-2);
+    }
     numstack=[];
     opstack=[];
     var lpcnt=0;
     var lastval=false;
     while(expr.length){
+        console.log("Expression Left:",expr)
         //console.log(expr,/^[+-]?[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr),isOperator(expr));
         var newop;
         if(/^[0-9]*[.]?[0-9]*E?[0-9]+/.test(expr)){
@@ -163,7 +169,8 @@ function expressionEval(expr){
     }
     while(opstack.length){
         applyToStack(numstack,opstack.pop())
-        console.log(halt)
+        console.log("Stack",...numstack,opstack)
+        //console.log(halt)
         if(halt) return;
     }
     if(numstack.length>1){
@@ -172,6 +179,20 @@ function expressionEval(expr){
         halt=true;
         return;
     }
+    if(addhandle!=""){
+        if(isCmplx(numstack[0])){
+            if(addhandle=="M+")
+                memory["M"]=cmplx.add(new cmplx(memory["M"]),numstack[0]);
+            if(addhandle=="M-")
+                memory["M"]=cmplx.sub(new cmplx(memory["M"]),numstack[0]);
+        }else{
+            if(addhandle=="M+")
+                memory["M"]=toNum(memory["M"])+numstack[0];
+            if(addhandle=="M-")
+                memory["M"]=toNum(memory["M"])-numstack[0];
+        }
+    }
+
     console.log("Stack",...numstack);
     return numstack[0];
 }

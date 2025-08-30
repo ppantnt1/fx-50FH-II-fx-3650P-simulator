@@ -5,6 +5,10 @@ window.addEventListener('load',function(){
 
 class cmplx{
     constructor(a=0,b=0){
+        if(isCmplx(a)){
+            b=a.im;
+            a=a.re;
+        }
         this.re=a;
         this.im=b;
     }
@@ -37,7 +41,6 @@ var constants={
     "e":2.71828182845904523536,
     "π":3.14159265358979323846,
     "i":new cmplx(0,1),
-   
 }
 
 class numPair{
@@ -82,4 +85,10 @@ function neq0(val){
         return true;
 
     return false;
+}
+
+function toNum(val){
+    if(isCmplx(val))
+        return  val.re;
+    return val;
 }

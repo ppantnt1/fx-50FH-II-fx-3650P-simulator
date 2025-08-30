@@ -95,17 +95,9 @@ function ctrlFlowHandler(instr){
     if(instr.startsWith("If")){
         instr=instr.substr(2);
         var sto="";
-        if(instr.substr(-2)=="M+"||instr.substr(-2)=="M-"){
-            sto=instr.substr(-2);
-            instr=instr.substr(0,instr.length-2);
-        }
         var expr=expressionEval(instr);
         //console.log(sto,instr)
         if(halt)return -1;
-        if(sto=="M+")
-        memory["M"]+=expr;
-        if(sto=="M-")
-        memory["M"]-=expr;
         memory["IfEval"]=neq0(expr);
         if(!memory["IfEval"]){
             memory["skipUntilMatch"]=/^(Else.*|IfEnd)/

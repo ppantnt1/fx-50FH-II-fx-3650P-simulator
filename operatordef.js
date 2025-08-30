@@ -1,5 +1,5 @@
 const operationList=[
-    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","cb√","ˣ√","√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦","ln","log","°","ʳ","ᵍ","arg","Conjg"
+    "+","-","×",'*',"÷","/","┘","(",")","^","%","ᴇ","cb√","ˣ√","√","⁻¹","²","³","sinh⁻¹","cosh⁻¹","tanh⁻¹","sinh","cosh","tanh","sin⁻¹","cos⁻¹","tan⁻¹","sin","cos","tan","=","≠",">","<","≧","≦","ln","log","°","ʳ","ᵍ","arg","Conjg","Abs","∠","!","Rnd",
 ];
 
 const valSuffix=[
@@ -19,7 +19,7 @@ const opProp={
     "*":     [3 ,mult   ,2,true ,false,false],
     "÷":     [3 ,div    ,2,true ,false,false],
     "/":     [3 ,div    ,2,true ,false,false],
-    "┘":     [3 ,fracdiv,2,true ,false,false],
+    "┘":     [5 ,fracdiv,2,true ,false,false],
     "ᴇ":     [7 ,expA   ,2,true ,false,false],
     "(":     [9 ,hold   ,1,false,false,false],
     ")":     [0 ,hold   ,1,false,false,false],
@@ -50,24 +50,34 @@ const opProp={
     "°":     [10,fromdeg,1,false,true ,false],
     "ʳ":     [10,fromrad,1,false,true ,false],
     "ᵍ":     [10,fromgra,1,false,true ,false],
+    "Abs":   [9 ,abs    ,1,false,false,true ],
+    "!":     [10,fact   ,1,false,true ,false],
+    "Rnd":   [9,rnd    ,1,false,false,true ],
 
     //Cmplx Exclusive
+    "∠":     [4 ,ang    ,2,true ,false,false],
     "arg":   [9 ,arg    ,1,false,false,true ],
     "Conjg": [9 ,conjg  ,1,false,false,true ],
 }
 
 const col={"opPrec":0,"opFunc":1,"opParam":2,"leftFirst":3,"suffixOp":4,"prefixFunc":5}
 
+function epseq(a,b){
+    return Math.abs(a-b)<1e-10;
+}
+function epsneq(a,b){
+    return Math.abs(a-b)>=1e-10;
+}
 function neq(a,b){
-    if(a instanceof cmplx){
-        return a.re==b.re&&a.im==b.im;
+    if(isCmplx(a)){
+        return (epsneq(a.re,b.re)||epsneq(a.im!=b.im))?1:0;
     }
-    return (a!=b)?1:0;
+    return (epsneq(a,b))?1:0;
 }
 
 function eq(a,b){
-    if((a instanceof cmplx)&&a.im!=0){
-        return a.re!=b.re||a.im!=b.im;
+    if(isCmplx(a)){
+        return (a.re==b.re&&a.im==b.im)?1:0;
     }
     return (a==b)?1:0;
 }
@@ -195,7 +205,7 @@ function div100(a){
 
 
 function sqrt(a){
-    if((a instanceof cmplx)){
+    if(isCmplx(a)){
         if(a.im!=0){
             halt=true;
             return 0;
@@ -210,7 +220,7 @@ function sqrt(a){
 
 function cbrt(a){
     if(a instanceof cmplx){
-        return cmplx(Math.cbrt(a.re));
+        return new cmplx(Math.cbrt(a.re));
     }
     return Math.cbrt(a);
 }
@@ -412,7 +422,7 @@ function fromdeg(x){
         return x;
     }
     if(memory["AngleMode"]=="rad"){
-        return x*memory["π"]/90;
+        return x*memory["π"]/180;
     }
     return x*100/90;
 }
@@ -421,12 +431,12 @@ function fromrad(x){
     if(isCmplx(x))
         x=x.re;
     if(memory["AngleMode"]=="deg"){
-        return x/memory["π"]*90;
+        return x/memory["π"]*180;
     }
     if(memory["AngleMode"]=="rad"){
         return x;
     }
-    return x/memory["π"]*100;
+    return x/memory["π"]*200;
 }
 
 function fromgra(x){
@@ -435,8 +445,8 @@ function fromgra(x){
     if(memory["AngleMode"]=="deg"){
         return x/100*90
     }
-    if(memory["AngleMode"]=="deg"){
-        return x/100*memory["π"];
+    if(memory["AngleMode"]=="rad"){
+        return x/200*memory["π"];
     }
     return x;
 }
@@ -445,12 +455,12 @@ function torad(x){
     if(isCmplx(x))
         x=x.re;
     if(memory["AngleMode"]=="deg"){
-        return x*memory["π"]/90;
+        return x*memory["π"]/180;
     }
     if(memory["AngleMode"]=="rad"){
         return x;
     }
-    return x*memory["π"]/100;
+    return x*memory["π"]/200;
 }
 
 function arg(x){
@@ -462,11 +472,57 @@ function arg(x){
         halt=true;
         return 0;
     }
-    return Math.atan2(x.im,x.re);
+    return fromrad(Math.atan2(x.im,x.re));
 }
 
 function conjg(x){
     if(!isCmplx(x))
         return x;
     return new cmplx(x.re,-x.im);
+}
+
+function abs(x){
+    if(isCmplx(x)){
+        //console.log(cmplx.mul(x,cmplx.conjg(x)).re);
+        return new cmplx(Math.sqrt(cmplx.mul(x,cmplx.conjg(x)).re));
+    }
+    return Math.sqrt(x*x);
+}
+
+function ang(a,b){
+    if(a.im!=0||b.im!=0||!isCmplx(a)){
+        halt=true;
+        return 0;
+    }
+    return new cmplx(a.re*Math.cos(torad(b.re)),a.re*Math.sin(torad(b.re)))
+}
+
+function fact(a){
+    if(isCmplx(a)){
+        if(a.im){
+            halt=true;
+            return 0
+        }
+        a=a.re;
+    }
+    if(!Number.isInteger(a)){
+        halt=true;
+        return 0;
+    }
+    if(a<0){
+        halt=true;
+        return 0;
+    }
+    if(a==0)
+        return 1;
+    return a*fact(a-1);
+}
+
+function rnd(a){
+    if(isCmplx(a)){
+        console.log(a)
+        return new cmplx(Math.round(a.re),Math.round(a.im))
+    }
+    return Math.round(a);
+
 }

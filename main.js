@@ -14,7 +14,7 @@ const tokens =
         "Memory": ["A", "B", "C", "D", "X", "Y", "M", "M+", "M-", "ClrMemory", "Ans"],
         "Setup": ["Fix ", "Sci ", "Norm ", "Deg ", "Rad ", "Gra "],
         "Other": ["ℙ", "ℂ", ",", ";", "Ran#", "π"],
-        "Complex Mode": ["i", "∠", ">r∠θ", ">a+bi", "arg(", "Conig("],
+        "Complex Mode": ["i", "∠", ">r∠θ", ">a+bi", "arg(", "Conjg("],
         "DRG":["°","ʳ","ᵍ"]
         //"SD/REG Mode": ["ClrStat", "FreqOn", "FreqOff", "Σx²", "Σx", "n", "Σy²", "Σy", "Σxy", "Σx²y", "Σx³", "Σx⁴", "x̄", "σx", "sx", "ȳ", "σy", "sy", "a", "b", "r", "x̂", "ŷ", "minX", "maxX", "minY", "maxY", ";", "DT"]
     }
@@ -210,7 +210,7 @@ async function ExecuteInstruction(instr,nesting=0){
 
 
     var storeTo="Ans"
-    if(new Set(["→A","→B","→C","→D","→X","→Y","→M","M+","M-"]).has(instr.substr(-2))){
+    if(new Set(["→A","→B","→C","→D","→X","→Y","→M"]).has(instr.substr(-2))){
         storeTo=instr.substr(-1);
         instr=instr.substr(0,instr.length-2);
     }
@@ -222,21 +222,7 @@ async function ExecuteInstruction(instr,nesting=0){
     var retval=expressionEval(instr);
     if(halt) return; 
     memory["Ans"]=retval;
-    if(storeTo!='+'&&storeTo!='-')
     memory[storeTo]=memory["Ans"];
-    else if(storeTo=="+"){
-        if(isCmplx(memory["M"])){
-            memory["M"]=cmplx.add(memory["M"],memory["Ans"]);
-        }else{
-            memory["M"]+=memory["Ans"];
-        }
-    }else{
-        if(isCmplx(memory["M"])){
-            memory["M"]=cmplx.sub(memory["M"],memory["Ans"]);
-        }else{
-            memory["M"]-=memory["Ans"];
-        }
-    }
     console.log("Store to",storeTo,memory[storeTo])
     return 0;
 }
